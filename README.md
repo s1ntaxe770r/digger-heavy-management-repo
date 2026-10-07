@@ -25,3 +25,5 @@ Workflows:
 Context: diggerhq/digger PRs #2706, #2724 and #2739 added `git_timeout` to
 `digger.yml`; this repo reproduces the remaining case where the timeout did not
 reach the management repo clone in backend-orchestrated (spec / drift) runs.
+
+Fixture created 2026-10-07.
