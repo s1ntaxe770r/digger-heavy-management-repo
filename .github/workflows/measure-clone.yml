@@ -1,0 +1,29 @@
+name: measure-clone
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Time the clone Digger's policy provider runs
+        run: |
+          set -euo pipefail
+          start=$(date +%s.%N)
+          git clone -b main --depth 1 --single-branch "https://github.com/${GITHUB_REPOSITORY}.git" /tmp/clone
+          end=$(date +%s.%N)
+          secs=$(printf '%.1f' "$(echo "$end - $start" | bc)")
+          size=$(du -sh /tmp/clone/.git | cut -f1)
+          files=$(find /tmp/clone -type f -not -path '*/.git/*' | wc -l)
+          echo "clone_seconds=${secs} size=${size} files=${files}"
+          {
+            echo "## Depth-1 clone of ${GITHUB_REPOSITORY} (main)"
+            echo ""
+            echo "| seconds | .git size | files |"
+            echo "|---|---|---|"
+            echo "| ${secs} | ${size} | ${files} |"
+            echo ""
+            echo "Digger's default git_timeout is 30 seconds."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,14 @@
+# dummy unit stage/us-east-1/service-0289
+include "root" {
+  path = find_in_parent_folders("root.hcl")
+}
+
+terraform {
+  source = "git::https://github.com/example/modules.git//service?ref=v1.289"
+}
+
+inputs = {
+  name        = "service-0289"
+  environment = "stage"
+  region      = "us-east-1"
+}

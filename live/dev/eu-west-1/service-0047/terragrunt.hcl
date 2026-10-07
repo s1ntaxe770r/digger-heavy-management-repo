@@ -1,0 +1,14 @@
+# dummy unit dev/eu-west-1/service-0047
+include "root" {
+  path = find_in_parent_folders("root.hcl")
+}
+
+terraform {
+  source = "git::https://github.com/example/modules.git//service?ref=v1.047"
+}
+
+inputs = {
+  name        = "service-0047"
+  environment = "dev"
+  region      = "eu-west-1"
+}

@@ -1,0 +1,50 @@
+name: generate-heavy-data
+
+on:
+  workflow_dispatch:
+    inputs:
+      chunks:
+        description: "Number of pushes to make"
+        default: "2"
+      blobs_per_chunk:
+        description: "Random 95 MiB blobs per push (10 keeps each push under 1 GB; GitHub rejects pushes over 2 GB)"
+        default: "10"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Append random blobs and push
+        env:
+          CHUNKS: ${{ inputs.chunks }}
+          BLOBS: ${{ inputs.blobs_per_chunk }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Partial clone: trees and commits only. Existing blobs are never downloaded,
+          # so each run costs only what it adds.
+          git clone --depth 1 --filter=blob:none --no-checkout \
+            "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" work
+          cd work
+          git read-tree HEAD
+          git config user.name "heavy-data-bot"
+          git config user.email "heavy-data-bot@users.noreply.github.com"
+          for c in $(seq 1 "$CHUNKS"); do
+            mkdir -p blobs
+            for b in $(seq 1 "$BLOBS"); do
+              head -c 95M /dev/urandom > "blobs/$(date +%s%N)-${b}.bin"
+            done
+            git add blobs
+            git commit -qm "add ${BLOBS} x 95 MiB random blobs (run ${GITHUB_RUN_NUMBER}, chunk ${c})"
+            git push -q origin HEAD:main
+            rm -f blobs/*.bin
+            echo "pushed chunk ${c}/${CHUNKS}"
+          done
+          echo "objects on disk: $(du -sh .git | cut -f1)"
+
+  measure:
+    needs: generate
+    uses: ./.github/workflows/measure-clone.yml
