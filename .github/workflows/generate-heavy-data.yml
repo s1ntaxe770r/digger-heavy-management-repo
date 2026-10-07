@@ -33,12 +33,17 @@ jobs:
           git read-tree HEAD
           git config user.name "heavy-data-bot"
           git config user.email "heavy-data-bot@users.noreply.github.com"
+          # random data neither deltas nor compresses: skip both so commit and push stay fast
+          git config core.bigFileThreshold 1m
+          git config core.compression 0
+          git config pack.window 0
           for c in $(seq 1 "$CHUNKS"); do
             mkdir -p blobs
             for b in $(seq 1 "$BLOBS"); do
               head -c 95M /dev/urandom > "blobs/$(date +%s%N)-${b}.bin"
             done
-            git add blobs
+            # --ignore-removal: earlier chunks were rm'd from the worktree to save disk; keep them in the tree
+            git add --ignore-removal blobs
             git commit -qm "add ${BLOBS} x 95 MiB random blobs (run ${GITHUB_RUN_NUMBER}, chunk ${c})"
             git push -q origin HEAD:main
             rm -f blobs/*.bin
