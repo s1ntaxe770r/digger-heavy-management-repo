@@ -1,3 +1,4 @@
+# Random-blob generator for the Digger git_timeout fixture.
 name: generate-heavy-data
 
 on:
